@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gemini Chat Studio</title>
+  <style>
+    :root {
+      --aurora-bg: #010103;
+      --aurora-surface: rgba(42, 38, 79, 0.4);
+      --aurora-surface-hover: rgba(58, 53, 110, 0.5);
+      --aurora-border: rgba(255, 255, 255, 0.1);
+      --aurora-glow: #5a62f5;
+      --aurora-text-primary: #E9E9EB;
+      --aurora-text-secondary: #A3A3A8;
+      --aurora-accent-primary: #5a62f5;
+      --aurora-accent-hover: #787FF6;
+      --aurora-accent-secondary: #9c33f5;
+      --aurora-accent-danger: #f53333;
+    }
+
+    @keyframes aurora-background-pan {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    body {
+      background-color: var(--aurora-bg);
+      color: var(--aurora-text-primary);
+      background-image: 
+        radial-gradient(ellipse at top, rgba(90, 98, 245, 0.2), transparent 50%),
+        radial-gradient(ellipse at bottom, rgba(156, 51, 245, 0.15), transparent 60%);
+      background-repeat: no-repeat;
+      background-size: 200% 200%;
+      animation: aurora-background-pan 15s ease-in-out infinite;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+    html { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.1) transparent; }
+
+    /* Aurora Component Styles */
+    .aurora-surface {
+      background-color: var(--aurora-surface);
+      border: 1px solid var(--aurora-border);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    
+    .aurora-panel {
+        background-color: rgba(13, 15, 24, 0.8);
+        border: 1px solid var(--aurora-border);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+    }
+    
+    input.aurora-input, textarea.aurora-textarea, select.aurora-select {
+        background-color: rgba(0,0,0,0.3);
+        border: 1px solid var(--aurora-border);
+        color: var(--aurora-text-primary);
+        border-radius: 0.375rem;
+        transition: all 0.2s ease-in-out;
+    }
+     input.aurora-input:focus, textarea.aurora-textarea:focus, select.aurora-select:focus {
+        outline: none;
+        border-color: var(--aurora-accent-primary);
+        box-shadow: 0 0 12px -2px var(--aurora-accent-primary);
+    }
+
+    /* Markdown specific styles */
+    .markdown-content strong { font-weight: 600; color: var(--text-primary); }
+    .markdown-content em { font-style: italic; color: #c3baff; }
+    .markdown-content a { color: var(--aurora-accent-hover); text-decoration: none; border-bottom: 1px dotted; }
+    .markdown-content a:hover { color: var(--aurora-glow); border-bottom: 1px solid; }
+      /* This rule now includes 'div' to fix the newline rendering issue. */
+      .markdown-content p, .markdown-content li > p, .markdown-content div {
+          margin-bottom: 0.5em; margin-top: 0.5em; overflow-wrap: break-word; word-break: normal; white-space: pre-line;
+      }
+    .markdown-content blockquote {
+      border-left: 2px solid var(--aurora-accent-secondary);
+      padding-left: 1em; margin-left: 0; color: var(--text-secondary); font-style: italic;
+    }
+   /* This rule adds list-style properties to fix numbered and bulleted lists. */
+    .markdown-content ul, .markdown-content ol {
+        padding-left: 1.5em; margin-top: 0.5em; margin-bottom: 0.5em; list-style-position: outside;
+    }
+    .markdown-content ul { list-style-type: disc; }
+    .markdown-content ol { list-style-type: decimal; }
+    .markdown-content li { margin-bottom: 0.25em; }
+    .markdown-content table {
+        width: auto; border-collapse: collapse; margin-top: 1em; margin-bottom: 1em; border: 1px solid var(--aurora-border);
+    }
+    .markdown-content th, .markdown-content td {
+        border: 1px solid var(--aurora-border); padding: 0.5em 0.75em; text-align: left;
+    }
+    .markdown-content th { background-color: var(--aurora-surface); font-weight: 600; }
+    .markdown-content hr { border-top: 1px solid var(--aurora-border); margin: 1em 0; }
+    .markdown-content h1, .markdown-content h2, .markdown-content h3 {
+        font-weight: 600; margin-top: 1em; margin-bottom: 0.5em; border-bottom: 1px solid var(--aurora-border); padding-bottom: 0.3em;
+    }
+    .markdown-content h1 { font-size: 1.5em; }
+    .markdown-content h2 { font-size: 1.25em; }
+    .markdown-content h3 { font-size: 1.1em; }
+    
+    .highlighted-text {
+      background-color: rgba(253, 224, 71, 0.3);
+      color: #fde047;
+      padding: 0.05em 0.15em;
+      border-radius: 0.2em;
+    }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Custom range slider */
+    input[type=range] {
+      -webkit-appearance: none;
+      background: transparent;
+      cursor: pointer;
+      width: 100%;
+    }
+    input[type=range]:focus {
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 4px;
+      background: var(--aurora-surface);
+      border-radius: 2px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 16px;
+      width: 16px;
+      border-radius: 50%;
+      background: var(--aurora-accent-primary);
+      margin-top: -6px;
+      transition: transform 0.2s ease;
+    }
+    input[type=range]:focus::-webkit-slider-thumb {
+      box-shadow: 0 0 0 3px rgba(90, 98, 245, 0.5);
+    }
+    input[type=range]:active::-webkit-slider-thumb {
+      transform: scale(1.2);
+    }
+    
+    .animate-thinking-dots > div {
+        animation: 생각_점_깜빡임 1.4s infinite ease-in-out;
+    }
+    .animate-thinking-dots > div:nth-child(1) {
+        animation-delay: -0.32s;
+    }
+    .animate-thinking-dots > div:nth-child(2) {
+        animation-delay: -0.16s;
+    }
+
+    @keyframes 생각_점_깜빡임 {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.9); }
+    }
+    @keyframes spin-slow {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .animate-spin-slow {
+      animation: spin-slow 3s linear infinite;
+    }
+    
+    /* Fix for message options menu overlap in virtualized list */
+    .virtual-item-container:has(.message-item-root.menu-open) {
+        z-index: 20 !important; /* Elevate the entire container when its child menu is open */
+    }
+  </style>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp,container-queries"></script>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.1.0",
+    "react-dom/client": "https://esm.sh/react-dom@^19.1.0/client",
+    "react/": "https://esm.sh/react@^19.1.0/",
+    "react-markdown": "https://esm.sh/react-markdown@^10.1.0",
+    "remark-gfm": "https://esm.sh/remark-gfm@^4.0.1",
+    "rehype-raw": "https://esm.sh/rehype-raw@^7.0.0",
+    "react-syntax-highlighter": "https://esm.sh/react-syntax-highlighter@^15.6.1",
+    "react-syntax-highlighter/": "https://esm.sh/react-syntax-highlighter@^15.6.1/",
+    "mark.js/": "https://esm.sh/mark.js@^8.11.1/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.7.0",
+    "@tanstack/react-virtual": "https://esm.sh/@tanstack/react-virtual@^3.10.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
+    "zustand": "https://esm.sh/zustand@^5.0.6",
+    "jszip": "https://esm.sh/jszip@3.10.1",
+    "react-zoom-pan-pinch": "https://esm.sh/react-zoom-pan-pinch@^3.7.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="bg-transparent">
+  <div id="root"></div>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script type="module" src="./index.tsx"></script>
+</body>
+</html>
